@@ -1,0 +1,12 @@
+{
+  "font": { "face": "CaskaydiaCove NF", "size": 11 },
+  "colorScheme": "Tokyo Night",
+  "opacity": 88,
+  "useAcrylic": true,
+  "padding": "12",
+  "cursorShape": "filledBox",
+  "antialiasingMode": "grayscale",
+  "scrollbarState": "visible",
+  "showMarksOnScrollbar": true,
+  "autoMarkPrompts": true
+}

@@ -1,0 +1,8 @@
+# Backups created by install.ps1
+*.bak-glowup
+*.bak-claude
+
+# OS cruft
+Thumbs.db
+.DS_Store
+desktop.ini
