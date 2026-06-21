@@ -4,13 +4,7 @@ Turn a stock Windows Terminal + PowerShell into something you actually enjoy loo
 
 > **Theme:** Tokyo Night · **Prompt:** Oh My Posh (two-line) · **Font:** CaskaydiaCove Nerd Font
 
-<!-- Drop a screenshot at assets/preview.png and it'll show here -->
-<!-- ![preview](assets/preview.png) -->
-
-```
-~\my-project    main ↑1    ⬢ v20.11   ⏱ 42ms
-❯
-```
+![windows-terminal-glowup preview](assets/preview.png)
 
 ---
 
