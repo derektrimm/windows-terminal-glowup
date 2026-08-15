@@ -1,0 +1,23 @@
+{
+  "psreadline": {
+    "Command": "#81A1C1",
+    "Parameter": "#B48EAD",
+    "Operator": "#88C0D0",
+    "Variable": "#A3BE8C",
+    "String": "#A3BE8C",
+    "Number": "#D08770",
+    "Type": "#8FBCBB",
+    "Comment": "#616E88",
+    "Keyword": "#B48EAD",
+    "Error": "#BF616A",
+    "InlinePrediction": "#616E88",
+    "ListPrediction": "#81A1C1",
+    "Default": "#D8DEE9"
+  },
+  "style": {
+    "directory": "#81A1C1",
+    "error": "#BF616A",
+    "warning": "#EBCB8B",
+    "tableHeader": "#B48EAD"
+  }
+}
