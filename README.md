@@ -4,7 +4,9 @@ Turn a stock Windows Terminal + PowerShell into something you actually enjoy loo
 
 > **Theme:** Tokyo Night · **Prompt:** Oh My Posh (two-line) · **Font:** CaskaydiaCove Nerd Font
 
-![windows-terminal-glowup preview](assets/preview.png)
+![The two-line prompt, ll with file icons and git status, and a delta side-by-side diff](assets/preview.png)
+
+<sup>Rendered straight from this repo's theme and configs: the two-line prompt (path · git status · run time), `ll` with icons + git column, and a `delta` side-by-side diff.</sup>
 
 ---
 

@@ -35,6 +35,11 @@ function Install-WingetId($id) {
     Write-Host "    - $id" -ForegroundColor DarkGray
     winget install --id $id -e -s winget --silent `
         --accept-source-agreements --accept-package-agreements --disable-interactivity | Out-Null
+    # winget signals failure through its exit code, which $ErrorActionPreference
+    # never sees. 0x8A15002B / 0x8A150061 mean "already installed, nothing to do".
+    if ($LASTEXITCODE -notin 0, 0x8A15002B, 0x8A150061) {
+        throw "winget failed for $id (exit code 0x$('{0:X8}' -f $LASTEXITCODE))"
+    }
 }
 
 Write-Host ""
