@@ -15,8 +15,13 @@
   prompt theme. `-WhatIf` supported.
 - Image paste: `Ctrl+V` in PowerShell saves a clipboard image to a temp PNG
   and inserts its path; copied files insert their paths; text pastes as
-  before. Windows Terminal's own `Ctrl+V` binding is released to the shell
-  (`Ctrl+Shift+V`, `Shift+Insert`, and right-click still paste text).
+  before. Windows Terminal's own `Ctrl+V` binding is released to the shell.
+- Right-click (and `Ctrl+Shift+V`) paste images too, in every tab including
+  cmd and WSL: a clipboard shim (`clipboard-image-shim.ps1`, one hidden
+  instance per login) saves an image-only clipboard to a PNG and adds the
+  path as clipboard text next to the image, so the terminal's text paste has
+  something to insert. Text on the clipboard is never replaced; disable with
+  `GLOWUP_NO_CLIP_SHIM=1`.
 - `icat` — inline image viewer (chafa; sixels on Windows Terminal 1.22+,
   unicode blocks elsewhere).
 

@@ -51,7 +51,7 @@ pwsh -File .\uninstall.ps1           # put the backups back (also takes -WhatIf)
 - **Predictive autocomplete** — a dropdown of suggestions from history + a predictor plugin (PSReadLine)
 - **Tokyo Night** color scheme, subtle acrylic transparency, comfy padding, block cursor
 - **Visible scrollbar with command marks** — a tick per command so you can see/jump through your scrollback
-- **Images in the terminal** — drag a file onto the window to get its path; `Ctrl+V` a screenshot to save it as a PNG and get its path at the prompt; `icat` renders it inline (sixels on Windows Terminal 1.22+, unicode blocks elsewhere)
+- **Images in the terminal** — paste a copied screenshot with **right-click, `Ctrl+V`, or `Ctrl+Shift+V`** and its path lands at the prompt (saved as a PNG); drag a file onto the window to get its path; `icat` renders any of them inline (sixels on Windows Terminal 1.22+, unicode blocks elsewhere). [How it works](#pasting-images)
 
 ### Modern CLI tools (installed via winget)
 | You type | Tool | What it does |
@@ -89,9 +89,18 @@ pwsh -File .\uninstall.ps1           # put the backups back (also takes -WhatIf)
 | `Shift+F11` | Focus mode (hide tabs/title) |
 | <code>Win+&#96;</code> | Quake-style drop-down terminal |
 | `Alt+K` | Clear screen |
-| `Ctrl+V` | Paste — a copied **image** is saved as a PNG and its path inserted (PowerShell tabs); text pastes as usual |
+| `Ctrl+V` / right-click / `Ctrl+Shift+V` | Paste — a copied **image** lands as the path of a saved PNG; text pastes as usual |
 
-`Ctrl+V` is released from Windows Terminal to the shell to make image paste work; `Ctrl+Shift+V`, `Shift+Insert`, and right-click keep the terminal's plain text paste in every tab.
+`Ctrl+V` is released from Windows Terminal to the shell so PowerShell can handle images directly; `Ctrl+Shift+V`, `Shift+Insert`, and right-click keep the terminal's text paste in every tab — which pastes image paths too, thanks to the clipboard shim below.
+
+## Pasting images
+
+Windows Terminal's own paste (right-click, `Ctrl+Shift+V`) only ever inserts clipboard *text*, and it offers no hook to change that — so a copied screenshot normally pastes nothing. Two pieces fix it:
+
+- **In PowerShell tabs, `Ctrl+V` handles images itself** (a PSReadLine handler): a clipboard image is saved to `%TEMP%\terminal-pastes\paste-*.png` and its quoted path inserted; files copied in Explorer insert their quoted paths; text pastes normally. Works with no background process.
+- **Everywhere else — including right-click, and cmd/WSL tabs — a clipboard shim makes the terminal's text paste work for images.** `clipboard-image-shim.ps1` (installed next to your profile, one hidden instance per login, started with your first PowerShell tab) watches the clipboard sequence number; when the clipboard holds an image and *no text*, it saves the PNG and **adds** the path as clipboard text alongside the image. Apps that prefer images (Word, Paint, browsers) still paste the image; the terminal pastes the path.
+
+The shim never replaces text you copied, reads nothing but the clipboard, sends nothing anywhere, and is ~90 lines you can read. Saved PNGs are cleaned up after 7 days. Disable it with `GLOWUP_NO_CLIP_SHIM=1` (PowerShell `Ctrl+V` image paste keeps working without it); `uninstall.ps1` stops and removes it.
 
 ---
 

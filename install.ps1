@@ -95,6 +95,14 @@ function Invoke-Verify {
         Add-Check 'modules' $m ([bool](Get-Module -ListAvailable $m)) '' $false
     }
 
+    $shimFile = Join-Path (Split-Path $profilePath) 'clipboard-image-shim.ps1'
+    Add-Check 'clipboard' 'image shim installed' (Test-Path $shimFile) $shimFile $false
+    $shimMutex = $null
+    $shimRunning = [System.Threading.Mutex]::TryOpenExisting('Local\windows-terminal-glowup-clip-shim', [ref]$shimMutex)
+    if ($shimMutex) { $shimMutex.Dispose() }
+    Add-Check 'clipboard' 'image shim running' $shimRunning $(
+        if ($env:GLOWUP_NO_CLIP_SHIM) { 'disabled via GLOWUP_NO_CLIP_SHIM' } else { '' }) $false
+
     if ($IsWindows) {
         $fontHives = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts',
                      'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'
@@ -223,6 +231,7 @@ if ($PSCmdlet.ShouldProcess($profilePath, 'install glowup profile (backing up an
         Write-Host "Backed up existing profile -> $profilePath.bak-glowup" -ForegroundColor DarkYellow
     }
     Copy-Item (Join-Path $root 'powershell' 'Microsoft.PowerShell_profile.ps1') $profilePath -Force
+    Copy-Item (Join-Path $root 'powershell' 'clipboard-image-shim.ps1') (Split-Path $profilePath) -Force
     Write-Host "Profile installed -> $profilePath" -ForegroundColor Green
 }
 

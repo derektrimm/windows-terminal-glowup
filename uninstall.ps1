@@ -69,6 +69,24 @@ foreach ($wt in @(Get-WtSettingsPath)) {
     }
 }
 
+# --- Clipboard image shim ----------------------------------------------------
+$shimFile = Join-Path (Split-Path $profilePath) 'clipboard-image-shim.ps1'
+$shimProcs = @(Get-CimInstance Win32_Process -Filter "Name = 'pwsh.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -like '*clipboard-image-shim.ps1*' })
+foreach ($p in $shimProcs) {
+    if ($PSCmdlet.ShouldProcess("pwsh pid $($p.ProcessId)", 'stop clipboard image shim')) {
+        Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+        Write-Host "Clipboard shim stopped (pid $($p.ProcessId))" -ForegroundColor Green
+    }
+}
+if (Test-Path $shimFile) {
+    if ($PSCmdlet.ShouldProcess($shimFile, 'remove clipboard image shim')) {
+        Remove-Item $shimFile -Force
+        Write-Host "Clipboard shim removed -> $shimFile" -ForegroundColor Green
+        $restored++
+    }
+}
+
 # --- Prompt theme ------------------------------------------------------------
 $theme = "$env:LOCALAPPDATA\oh-my-posh\themes\two-line.omp.json"
 if ($env:LOCALAPPDATA -and (Test-Path $theme)) {

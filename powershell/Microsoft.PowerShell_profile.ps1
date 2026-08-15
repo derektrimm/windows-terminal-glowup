@@ -57,21 +57,25 @@ if ((Get-Module -ListAvailable PSReadLine) -and $Host.Name -eq 'ConsoleHost' -an
             $handled = $false
             try {
                 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-                if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
-                    $img = [System.Windows.Forms.Clipboard]::GetImage()
-                    try {
-                        $dir = Join-Path ([IO.Path]::GetTempPath()) 'terminal-pastes'
-                        $null = New-Item -ItemType Directory -Force -Path $dir
-                        $file = Join-Path $dir ('paste-{0:yyyyMMdd-HHmmss-ff}.png' -f (Get-Date))
-                        $img.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
-                        [Microsoft.PowerShell.PSConsoleReadLine]::Insert('"' + $file + '"')
+                # Text wins (including the path the clipboard shim adds), so an
+                # Office-style image+text copy pastes its text as expected.
+                if (-not [System.Windows.Forms.Clipboard]::ContainsText()) {
+                    if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
+                        $img = [System.Windows.Forms.Clipboard]::GetImage()
+                        try {
+                            $dir = Join-Path ([IO.Path]::GetTempPath()) 'terminal-pastes'
+                            $null = New-Item -ItemType Directory -Force -Path $dir
+                            $file = Join-Path $dir ('paste-{0:yyyyMMdd-HHmmss-ff}.png' -f (Get-Date))
+                            $img.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+                            [Microsoft.PowerShell.PSConsoleReadLine]::Insert('"' + $file + '"')
+                            $handled = $true
+                        } finally { $img.Dispose() }
+                    }
+                    elseif ([System.Windows.Forms.Clipboard]::ContainsFileDropList()) {
+                        $paths = foreach ($p in [System.Windows.Forms.Clipboard]::GetFileDropList()) { '"' + $p + '"' }
+                        [Microsoft.PowerShell.PSConsoleReadLine]::Insert($paths -join ' ')
                         $handled = $true
-                    } finally { $img.Dispose() }
-                }
-                elseif ([System.Windows.Forms.Clipboard]::ContainsFileDropList()) {
-                    $paths = foreach ($p in [System.Windows.Forms.Clipboard]::GetFileDropList()) { '"' + $p + '"' }
-                    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($paths -join ' ')
-                    $handled = $true
+                    }
                 }
             } catch { $handled = $false }   # clipboard busy or MTA session -> text paste
             if (-not $handled) { [Microsoft.PowerShell.PSConsoleReadLine]::Paste() }
@@ -172,6 +176,26 @@ if ((Get-Module -ListAvailable PSFzf) -and (Get-Command fzf -ErrorAction Silentl
     -and $Host.Name -eq 'ConsoleHost' -and -not [Console]::IsInputRedirected) {
     Import-Module PSFzf
     Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+}
+
+# --- Clipboard image shim : right-click paste for images --------------------
+# A background watcher (clipboard-image-shim.ps1, installed next to this
+# profile) saves a copied image to a PNG and adds its quoted path as clipboard
+# TEXT — never replacing text you copied — so Windows Terminal's right-click
+# and Ctrl+Shift+V paste the path in ANY tab (cmd and WSL included). One
+# hidden instance per login session. Disable: set GLOWUP_NO_CLIP_SHIM=1.
+if ($IsWindows -and -not $env:GLOWUP_NO_CLIP_SHIM) {
+    $shimScript = Join-Path $PSScriptRoot 'clipboard-image-shim.ps1'
+    if (Test-Path $shimScript) {
+        $shimMutex = $null
+        $shimRunning = [System.Threading.Mutex]::TryOpenExisting(
+            'Local\windows-terminal-glowup-clip-shim', [ref]$shimMutex)
+        if ($shimMutex) { $shimMutex.Dispose() }
+        if (-not $shimRunning) {
+            Start-Process pwsh -WindowStyle Hidden -ArgumentList `
+                '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'Bypass', '-File', $shimScript
+        }
+    }
 }
 
 # --- fastfetch system banner on startup (comment out for a silent start) -----
