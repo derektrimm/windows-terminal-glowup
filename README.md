@@ -1,5 +1,7 @@
 # windows-terminal-glowup
 
+[![CI](https://github.com/derektrimm/windows-terminal-glowup/actions/workflows/ci.yml/badge.svg)](https://github.com/derektrimm/windows-terminal-glowup/actions/workflows/ci.yml)
+
 Turn a stock Windows Terminal + PowerShell into something you actually enjoy looking at — a themed two-line prompt, file icons, predictive autocomplete, a matching color scheme with transparency, and a set of modern CLI tools. One script, ~2 minutes.
 
 > **Theme:** Tokyo Night · **Prompt:** Oh My Posh (two-line) · **Font:** CaskaydiaCove Nerd Font
@@ -29,6 +31,14 @@ pwsh -ExecutionPolicy Bypass -File .\install.ps1 -ConfigureGitDelta
 When it finishes: **fully close Windows Terminal and open a new tab.** (The look only applies to newly opened tabs.) If you see ▯ boxes instead of icons, set the font to **CaskaydiaCove NF** in Settings → Defaults → Appearance.
 
 The installer is **safe to re-run** and backs up anything it replaces (`*.bak-glowup`).
+
+Three more switches:
+
+```powershell
+pwsh -File .\install.ps1 -WhatIf     # dry run — print every change, make none
+pwsh -File .\install.ps1 -Verify     # health check — what's installed, what's missing
+pwsh -File .\uninstall.ps1           # put the backups back (also takes -WhatIf)
+```
 
 ---
 
@@ -83,7 +93,8 @@ The installer is **safe to re-run** and backs up anything it replaces (`*.bak-gl
 ## What's in here
 
 ```
-install.ps1                         one-command setup (idempotent, backs up)
+install.ps1                         one-command setup (idempotent, backs up; -WhatIf, -Verify)
+uninstall.ps1                       restores the backups, removes the theme
 powershell/
   Microsoft.PowerShell_profile.ps1  the profile (prompt, aliases, helpers)
 oh-my-posh/
@@ -94,9 +105,38 @@ windows-terminal/
   keybindings.json                  the keybindings above
 git/
   delta.gitconfig                   optional delta diff config
+modules/WtSettings/                 the settings.json merge (see below)
+tests/                              Pester suite for the merge
 ```
 
 Prefer to install by hand or cherry-pick? Each file is standalone — copy the theme to `%LOCALAPPDATA%\oh-my-posh\themes\`, the profile to your `$PROFILE`, and merge the `windows-terminal/*.json` pieces into your `settings.json`.
+
+## How the settings merge works
+
+Windows Terminal owns `settings.json`, so the installer edits it as a guest. The
+merge lives in `modules/WtSettings` as pure functions over the parsed file:
+
+- **JSONC in, your keys preserved.** Comments and trailing commas parse; keys
+  the installer knows nothing about pass through untouched. The pre-1.0 layout
+  where `profiles` is a bare array is upgraded in place.
+- **Schemes are upserted by name.** Your own color schemes stay; only an
+  existing "Tokyo Night" entry is replaced.
+- **A key chord is claimed exactly once.** Conflicting bindings are removed
+  from both the legacy `keybindings` array and the modern `actions` array,
+  comparing normalized chords (`Shift+Ctrl+F` equals `ctrl+shift+f`). An
+  `actions` entry with an `id` keeps its action and loses only the chord.
+- **Every real settings file is handled** — stable, Preview, and unpackaged
+  (Scoop/Chocolatey) installs — each backed up to `settings.json.bak-glowup`
+  before writing.
+
+Because the merge never touches the filesystem itself, the whole thing is unit
+tested (`tests/`, Pester) on any OS with PowerShell 7:
+
+```powershell
+Invoke-Pester -Path ./tests
+```
+
+CI runs the suite plus PSScriptAnalyzer on every push and pull request.
 
 ---
 
@@ -109,7 +149,11 @@ Prefer to install by hand or cherry-pick? Each file is standalone — copy the t
 
 ## Undo
 
-The installer backs up your previous `$PROFILE` and Windows Terminal `settings.json` as `*.bak-glowup` right next to the originals — rename them back to restore.
+```powershell
+pwsh -File .\uninstall.ps1
+```
+
+restores your previous `$PROFILE` and each Windows Terminal `settings.json` from the `*.bak-glowup` backups the installer made, and removes the prompt theme. Installed tools, modules, and the font are left alone (the header of `uninstall.ps1` lists the removal one-liners). The backups sit right next to the originals, so renaming them back by hand works too.
 
 ---
 

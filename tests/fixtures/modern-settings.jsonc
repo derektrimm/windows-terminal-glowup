@@ -1,0 +1,71 @@
+// A realistic Windows Terminal settings.json: JSONC comments, trailing
+// commas, an existing user scheme, and bindings split across the modern
+// "actions" array and the legacy "keybindings" array.
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "defaultProfile": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+    "copyOnSelect": false,
+    "profiles": {
+        "defaults": {
+            "font": {
+                "face": "Consolas"
+            },
+        },
+        "list": [
+            {
+                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+                "name": "Windows PowerShell",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            },
+            {
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+                "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore",
+            },
+        ],
+    },
+    "schemes": [
+        {
+            "name": "My Custom Scheme",
+            "background": "#000000",
+            "foreground": "#FFFFFF",
+        },
+        {
+            "name": "Tokyo Night",
+            "background": "#FFFFFF",
+        },
+    ],
+    "actions": [
+        // user's own action with an id — its chord conflicts with our alt+1
+        {
+            "command": {
+                "action": "sendInput",
+                "input": "echo hi\r"
+            },
+            "id": "User.sendHi",
+            "keys": "alt+1"
+        },
+        // inline binding with no id — its chord conflicts with our find binding
+        {
+            "command": "openTabColorPicker",
+            "keys": "shift+ctrl+f"
+        },
+        // untouched action, chord we never claim
+        {
+            "command": "paste",
+            "id": "User.paste",
+            "keys": "ctrl+v"
+        },
+    ],
+    "keybindings": [
+        {
+            "command": "closeWindow",
+            "keys": "alt+f4"
+        },
+        {
+            "command": "openSettings",
+            "keys": "ALT+2"
+        },
+    ],
+}
