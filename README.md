@@ -13,7 +13,7 @@ Turn a stock Windows Terminal + PowerShell into something you actually enjoy loo
 You need **Windows 10/11** with **Windows Terminal** and **winget** (both ship on Windows 11). Then:
 
 ```powershell
-git clone https://github.com/trimmdev/windows-terminal-glowup.git
+git clone https://github.com/derektrimm/windows-terminal-glowup.git
 cd windows-terminal-glowup
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
