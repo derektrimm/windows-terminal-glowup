@@ -13,6 +13,12 @@
   non-zero if a core piece is missing.
 - `uninstall.ps1` — restores the `*.bak-glowup` backups and removes the
   prompt theme. `-WhatIf` supported.
+- Image paste: `Ctrl+V` in PowerShell saves a clipboard image to a temp PNG
+  and inserts its path; copied files insert their paths; text pastes as
+  before. Windows Terminal's own `Ctrl+V` binding is released to the shell
+  (`Ctrl+Shift+V`, `Shift+Insert`, and right-click still paste text).
+- `icat` — inline image viewer (chafa; sixels on Windows Terminal 1.22+,
+  unicode blocks elsewhere).
 
 ### Changed
 - Windows Terminal Preview and unpackaged (Scoop/Chocolatey) installs are

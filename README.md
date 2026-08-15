@@ -51,6 +51,7 @@ pwsh -File .\uninstall.ps1           # put the backups back (also takes -WhatIf)
 - **Predictive autocomplete** — a dropdown of suggestions from history + a predictor plugin (PSReadLine)
 - **Tokyo Night** color scheme, subtle acrylic transparency, comfy padding, block cursor
 - **Visible scrollbar with command marks** — a tick per command so you can see/jump through your scrollback
+- **Images in the terminal** — drag a file onto the window to get its path; `Ctrl+V` a screenshot to save it as a PNG and get its path at the prompt; `icat` renders it inline (sixels on Windows Terminal 1.22+, unicode blocks elsewhere)
 
 ### Modern CLI tools (installed via winget)
 | You type | Tool | What it does |
@@ -66,6 +67,7 @@ pwsh -File .\uninstall.ps1           # put the backups back (also takes -WhatIf)
 | `Ctrl+R` | [fzf](https://github.com/junegunn/fzf) + PSFzf | fuzzy history / file search |
 | `tldr` | [tealdeer](https://github.com/tealdeer-rs/tealdeer) | example-first command help |
 | `sudo` | [gsudo](https://github.com/gerardog/gsudo) | elevate a single command |
+| `icat` | [chafa](https://github.com/hpjansson/chafa) | images rendered in the terminal |
 
 ### Shell helpers (in the profile)
 `nt <name>` open a project in a **new tab** · `pj <name>` jump to a project · `gs` `gd` `gds` `gl` `lg` git shortcuts · `reload` re-source the profile · `..` / `...` up directories.
@@ -87,6 +89,9 @@ pwsh -File .\uninstall.ps1           # put the backups back (also takes -WhatIf)
 | `Shift+F11` | Focus mode (hide tabs/title) |
 | <code>Win+&#96;</code> | Quake-style drop-down terminal |
 | `Alt+K` | Clear screen |
+| `Ctrl+V` | Paste — a copied **image** is saved as a PNG and its path inserted (PowerShell tabs); text pastes as usual |
+
+`Ctrl+V` is released from Windows Terminal to the shell to make image paste work; `Ctrl+Shift+V`, `Shift+Insert`, and right-click keep the terminal's plain text paste in every tab.
 
 ---
 

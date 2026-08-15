@@ -55,7 +55,7 @@
         {
             "command": "paste",
             "id": "User.paste",
-            "keys": "ctrl+v"
+            "keys": "ctrl+insert"
         },
     ],
     "keybindings": [
@@ -66,6 +66,11 @@
         {
             "command": "openSettings",
             "keys": "ALT+2"
+        },
+        // conflicts with the ctrl+v release we ship
+        {
+            "command": "paste",
+            "keys": "ctrl+v"
         },
     ],
 }

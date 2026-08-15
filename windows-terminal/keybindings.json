@@ -29,6 +29,8 @@
   { "keys": "alt+shift+s", "command": { "action": "splitPane", "split": "horizontal" } },
   { "keys": "alt+shift+u", "command": { "action": "duplicatePane" } },
 
+  { "keys": "ctrl+v", "command": "unbound" },
+
   { "keys": "shift+f11", "command": "toggleFocusMode" },
   { "keys": "alt+k", "command": { "action": "sendInput", "input": "clear\r" } },
   { "keys": "win+`", "command": { "action": "globalSummon", "name": "_quake", "dropdownDuration": 200, "toggleVisibility": true, "monitor": "toMouse" } },

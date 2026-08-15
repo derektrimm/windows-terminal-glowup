@@ -122,7 +122,7 @@ function Invoke-Verify {
         Add-Check 'terminal' 'Windows Terminal checks' $true 'skipped: not Windows' $false
     }
 
-    foreach ($t in 'eza', 'bat', 'fd', 'rg', 'delta', 'lazygit', 'fzf', 'tldr', 'fastfetch', 'gsudo', 'btop', 'zoxide') {
+    foreach ($t in 'eza', 'bat', 'fd', 'rg', 'delta', 'lazygit', 'fzf', 'tldr', 'fastfetch', 'gsudo', 'btop', 'zoxide', 'chafa') {
         Add-Check 'tools' $t (Test-Cmd $t) '' $false
     }
 
@@ -175,7 +175,7 @@ if (-not $SkipTools) {
     $tools = @(
         'eza-community.eza', 'sharkdp.bat', 'sharkdp.fd', 'BurntSushi.ripgrep.MSVC',
         'dandavison.delta', 'JesseDuffield.lazygit', 'junegunn.fzf', 'dbrgn.tealdeer',
-        'Fastfetch-cli.Fastfetch', 'gerardog.gsudo', 'aristocratos.btop4win'
+        'Fastfetch-cli.Fastfetch', 'gerardog.gsudo', 'aristocratos.btop4win', 'hpjansson.Chafa'
     )
     foreach ($id in $tools) {
         try { Install-WingetId $id }

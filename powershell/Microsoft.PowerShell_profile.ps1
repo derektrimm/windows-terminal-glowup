@@ -46,6 +46,37 @@ if ((Get-Module -ListAvailable PSReadLine) -and $Host.Name -eq 'ConsoleHost' -an
     Set-PSReadLineKeyHandler -Key Tab       -Function MenuComplete
     Set-PSReadLineKeyHandler -Key Ctrl+f    -Function AcceptSuggestion
     Set-PSReadLineKeyHandler -Key Ctrl+RightArrow -Function ForwardWord
+
+    # Ctrl+V: a clipboard image is saved as a PNG and its path inserted; copied
+    # files insert their paths; plain text pastes as usual. Windows Terminal's
+    # own Ctrl+V binding is released in keybindings.json so the chord reaches
+    # the shell — Ctrl+Shift+V and right-click keep the terminal's text paste.
+    if ($IsWindows) {
+        Set-PSReadLineKeyHandler -Key Ctrl+v -BriefDescription PasteImageOrText `
+            -Description 'Paste a clipboard image as a saved PNG path, files as paths, text as text' -ScriptBlock {
+            $handled = $false
+            try {
+                Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+                if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
+                    $img = [System.Windows.Forms.Clipboard]::GetImage()
+                    try {
+                        $dir = Join-Path ([IO.Path]::GetTempPath()) 'terminal-pastes'
+                        $null = New-Item -ItemType Directory -Force -Path $dir
+                        $file = Join-Path $dir ('paste-{0:yyyyMMdd-HHmmss-ff}.png' -f (Get-Date))
+                        $img.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+                        [Microsoft.PowerShell.PSConsoleReadLine]::Insert('"' + $file + '"')
+                        $handled = $true
+                    } finally { $img.Dispose() }
+                }
+                elseif ([System.Windows.Forms.Clipboard]::ContainsFileDropList()) {
+                    $paths = foreach ($p in [System.Windows.Forms.Clipboard]::GetFileDropList()) { '"' + $p + '"' }
+                    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($paths -join ' ')
+                    $handled = $true
+                }
+            } catch { $handled = $false }   # clipboard busy or MTA session -> text paste
+            if (-not $handled) { [Microsoft.PowerShell.PSConsoleReadLine]::Paste() }
+        }
+    }
 }
 
 # --- $PSStyle : nicer built-in file listing / error colors (pwsh 7.2+) -------
@@ -78,6 +109,11 @@ if (Get-Command eza -ErrorAction SilentlyContinue) {
 if (Get-Command bat -ErrorAction SilentlyContinue) {
     Remove-Item Alias:cat -Force -ErrorAction SilentlyContinue
     function cat { bat --paging=never @args }
+}
+# icat <file...> : show images inline (chafa; sixels on Windows Terminal 1.22+,
+# unicode blocks anywhere else). Drag a file in or Ctrl+V a screenshot, then icat it.
+if (Get-Command chafa -ErrorAction SilentlyContinue) {
+    function icat { chafa --align center @args }
 }
 function .. { Set-Location .. }
 function ... { Set-Location ../.. }

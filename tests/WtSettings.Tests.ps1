@@ -146,7 +146,15 @@ Describe 'Merge-WtKeybindings' {
     It 'leaves non-conflicting actions untouched' {
         $paste = @($script:s['actions'] | Where-Object { $_['id'] -eq 'User.paste' })
         $paste.Count | Should -Be 1
-        $paste[0]['keys'] | Should -Be 'ctrl+v'
+        $paste[0]['keys'] | Should -Be 'ctrl+insert'
+    }
+
+    It 'releases ctrl+v: the user''s text-paste binding is evicted for the unbound entry' {
+        $ctrlV = @($script:s['keybindings'] | Where-Object {
+            (Get-WtNormalizedChord $_['keys']) -eq 'ctrl+v'
+        })
+        $ctrlV.Count | Should -Be 1
+        $ctrlV[0]['command'] | Should -Be 'unbound'
     }
 
     It 'evicts a legacy binding whose keys are an array (legacy fixture find)' {
