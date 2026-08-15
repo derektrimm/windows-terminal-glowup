@@ -8,7 +8,7 @@ BeforeAll {
 
     # The real payloads the installer ships
     $script:shipDefaults = Get-Content (Join-Path $repoRoot 'windows-terminal' 'profile-defaults.json') -Raw | ConvertFrom-WtJson
-    $script:shipScheme   = Get-Content (Join-Path $repoRoot 'windows-terminal' 'color-scheme.tokyo-night.json') -Raw | ConvertFrom-WtJson
+    $script:shipScheme   = Get-Content (Join-Path $repoRoot 'themes' 'tokyo-night' 'color-scheme.json') -Raw | ConvertFrom-WtJson
     $script:shipKeys     = @(Get-Content (Join-Path $repoRoot 'windows-terminal' 'keybindings.json') -Raw | ConvertFrom-Json -AsHashtable)
 
     function Get-ModernFixture {
@@ -236,15 +236,70 @@ Describe 'Shipped payloads are valid' {
         ($chords | Sort-Object -Unique).Count | Should -Be $chords.Count
     }
 
-    It 'color scheme carries the full 16-color palette plus fg/bg' {
-        foreach ($k in 'background', 'foreground', 'black', 'red', 'green', 'yellow', 'blue',
-                       'purple', 'cyan', 'white', 'brightBlack', 'brightRed', 'brightGreen',
-                       'brightYellow', 'brightBlue', 'brightPurple', 'brightCyan', 'brightWhite') {
-            $script:shipScheme[$k] | Should -Match '^#[0-9A-Fa-f]{6}$' -Because "scheme must define $k"
+    It 'profile defaults reference the default theme''s scheme' {
+        $script:shipDefaults['colorScheme'] | Should -Be $script:shipScheme['name']
+    }
+}
+
+Describe 'Theme catalog' {
+    BeforeAll {
+        $script:themeDirs = @(Get-ChildItem (Join-Path $script:repoRoot 'themes') -Directory)
+    }
+
+    It 'ships the documented themes' {
+        $names = $script:themeDirs.Name | Sort-Object
+        $names | Should -Contain 'tokyo-night'
+        $names | Should -Contain 'catppuccin-mocha'
+        $names | Should -Contain 'gruvbox-dark'
+        $names | Should -Contain 'nord'
+    }
+
+    It 'every theme carries all three files' {
+        foreach ($dir in $script:themeDirs) {
+            foreach ($f in 'color-scheme.json', 'two-line.omp.json', 'psreadline-colors.json') {
+                Join-Path $dir.FullName $f | Should -Exist -Because "$($dir.Name) must ship $f"
+            }
         }
     }
 
-    It 'profile defaults reference the scheme we ship' {
-        $script:shipDefaults['colorScheme'] | Should -Be $script:shipScheme['name']
+    It 'every scheme defines the full palette, cursor, and selection colors' {
+        foreach ($dir in $script:themeDirs) {
+            $scheme = Get-Content (Join-Path $dir.FullName 'color-scheme.json') -Raw | ConvertFrom-WtJson
+            foreach ($k in 'background', 'foreground', 'cursorColor', 'selectionBackground',
+                           'black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white',
+                           'brightBlack', 'brightRed', 'brightGreen', 'brightYellow', 'brightBlue',
+                           'brightPurple', 'brightCyan', 'brightWhite') {
+                $scheme[$k] | Should -Match '^#[0-9A-Fa-f]{6}$' -Because "$($dir.Name) scheme must define $k"
+            }
+        }
+    }
+
+    It 'scheme names are unique across themes' {
+        $names = foreach ($dir in $script:themeDirs) {
+            (Get-Content (Join-Path $dir.FullName 'color-scheme.json') -Raw | ConvertFrom-WtJson)['name']
+        }
+        ($names | Sort-Object -Unique).Count | Should -Be $names.Count
+    }
+
+    It 'every prompt theme parses and keeps the two-line layout' {
+        foreach ($dir in $script:themeDirs) {
+            $omp = Get-Content (Join-Path $dir.FullName 'two-line.omp.json') -Raw | ConvertFrom-Json -AsHashtable
+            @($omp['blocks']).Count | Should -Be 2 -Because "$($dir.Name) prompt must stay two-line"
+            $omp['transient_prompt'] | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    It 'every psreadline palette defines every color the profile reads' {
+        foreach ($dir in $script:themeDirs) {
+            $colors = Get-Content (Join-Path $dir.FullName 'psreadline-colors.json') -Raw | ConvertFrom-Json -AsHashtable
+            foreach ($k in 'Command', 'Parameter', 'Operator', 'Variable', 'String', 'Number',
+                           'Type', 'Comment', 'Keyword', 'Error', 'InlinePrediction',
+                           'ListPrediction', 'Default') {
+                $colors['psreadline'][$k] | Should -Match '^#[0-9A-Fa-f]{6}$' -Because "$($dir.Name) must define psreadline.$k"
+            }
+            foreach ($k in 'directory', 'error', 'warning', 'tableHeader') {
+                $colors['style'][$k] | Should -Match '^#[0-9A-Fa-f]{6}$' -Because "$($dir.Name) must define style.$k"
+            }
+        }
     }
 }

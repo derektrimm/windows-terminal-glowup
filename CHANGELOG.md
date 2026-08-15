@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Four selectable themes via `install.ps1 -Theme`: `tokyo-night` (default),
+  `catppuccin-mocha`, `gruvbox-dark`, `nord`. Each ships its Windows
+  Terminal scheme, Oh My Posh prompt, and PSReadLine/$PSStyle palette under
+  `themes/<name>/`, and re-running the installer switches everything
+  together. The prompt theme and color scheme moved from `oh-my-posh/` and
+  `windows-terminal/` into `themes/tokyo-night/`.
 - `modules/WtSettings` — the settings.json merge as a standalone module:
   JSONC parsing, profile-defaults overlay, color-scheme upsert, and
   keybinding deduplication by normalized chord.

@@ -21,8 +21,14 @@
     Windows Terminal actually carries the glowup settings. Exits non-zero if
     a core piece is missing.
 
+.PARAMETER Theme
+    Color theme for the terminal, prompt, and shell highlighting: one folder
+    under themes/. Re-run with a different -Theme any time to switch.
+
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\install.ps1
+.EXAMPLE
+    pwsh -File .\install.ps1 -Theme gruvbox-dark
 .EXAMPLE
     pwsh -File .\install.ps1 -ConfigureGitDelta
 .EXAMPLE
@@ -34,11 +40,14 @@
 param(
     [switch]$ConfigureGitDelta,
     [switch]$SkipTools,
-    [switch]$Verify
+    [switch]$Verify,
+    [ValidateSet('tokyo-night', 'catppuccin-mocha', 'gruvbox-dark', 'nord')]
+    [string]$Theme = 'tokyo-night'
 )
 
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+$themeSrc = Join-Path $root 'themes' $Theme
 Import-Module (Join-Path $root 'modules' 'WtSettings') -Force
 
 function Test-Cmd($name) { [bool](Get-Command $name -ErrorAction SilentlyContinue) }
@@ -95,6 +104,9 @@ function Invoke-Verify {
         Add-Check 'modules' $m ([bool](Get-Module -ListAvailable $m)) '' $false
     }
 
+    $themeColors = Join-Path (Split-Path $profilePath) 'theme-colors.json'
+    Add-Check 'shell' 'theme colors installed' (Test-Path $themeColors) $themeColors $false
+
     $shimFile = Join-Path (Split-Path $profilePath) 'clipboard-image-shim.ps1'
     Add-Check 'clipboard' 'image shim installed' (Test-Path $shimFile) $shimFile $false
     $shimMutex = $null
@@ -115,13 +127,17 @@ function Invoke-Verify {
         $shipKeys = @(Get-Content (Join-Path $root 'windows-terminal' 'keybindings.json') -Raw | ConvertFrom-Json -AsHashtable)
         foreach ($wt in $wtPaths) {
             $j = Get-Content $wt -Raw | ConvertFrom-WtJson
-            $schemeOk = [bool]@(@($j['schemes']) | Where-Object { $_['name'] -eq 'Tokyo Night' })
+            $wantScheme = if ($j['profiles'] -is [System.Collections.IDictionary]) {
+                $j['profiles']['defaults']['colorScheme'] } else { $null }
+            $schemeOk = [bool]($wantScheme -and
+                @(@($j['schemes']) | Where-Object { $_['name'] -eq $wantScheme }))
             $fontSet = $j['profiles'] -is [System.Collections.IDictionary] -and
                        $j['profiles']['defaults']['font']['face'] -eq 'CaskaydiaCove NF'
             $bound = @($j['keybindings']) | ForEach-Object { if ($_['keys']) { Get-WtNormalizedChord $_['keys'] } }
             $missingKeys = @($shipKeys | Where-Object { (Get-WtNormalizedChord $_['keys']) -notin $bound })
             $leaf = Split-Path (Split-Path $wt) -Leaf
-            Add-Check 'terminal' "scheme in $leaf" $schemeOk ''
+            Add-Check 'terminal' "scheme in $leaf" $schemeOk $(
+                if ($wantScheme) { $wantScheme } else { 'no colorScheme set' })
             Add-Check 'terminal' "font default in $leaf" $fontSet ''
             Add-Check 'terminal' "keybindings in $leaf" ($missingKeys.Count -eq 0) $(
                 if ($missingKeys.Count) { "$($missingKeys.Count) of $($shipKeys.Count) missing" } else { "all $($shipKeys.Count) bound" })
@@ -166,6 +182,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
         foreach ($p in 'ConfigureGitDelta', 'SkipTools', 'WhatIf') {
             if ($PSBoundParameters[$p]) { $fwd += "-$p" }
         }
+        if ($PSBoundParameters['Theme']) { $fwd += '-Theme', $Theme }
         & pwsh -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath @fwd
         exit $LASTEXITCODE
     }
@@ -215,11 +232,13 @@ if (Test-Cmd oh-my-posh) {
 }
 
 # --- Oh My Posh theme --------------------------------------------------------
+# The chosen theme's prompt file always installs under the same name, so the
+# profile needs no per-theme knowledge and re-running with -Theme switches it.
 $themeDir = "$env:LOCALAPPDATA\oh-my-posh\themes"
-if ($PSCmdlet.ShouldProcess("$themeDir\two-line.omp.json", 'install prompt theme')) {
+if ($PSCmdlet.ShouldProcess("$themeDir\two-line.omp.json", "install prompt theme ($Theme)")) {
     New-Item -ItemType Directory -Force -Path $themeDir | Out-Null
-    Copy-Item (Join-Path $root 'oh-my-posh' 'two-line.omp.json') "$themeDir\two-line.omp.json" -Force
-    Write-Host "Theme installed -> $themeDir\two-line.omp.json" -ForegroundColor Green
+    Copy-Item (Join-Path $themeSrc 'two-line.omp.json') "$themeDir\two-line.omp.json" -Force
+    Write-Host "Prompt theme ($Theme) -> $themeDir\two-line.omp.json" -ForegroundColor Green
 }
 
 # --- PowerShell 7 profile ----------------------------------------------------
@@ -232,6 +251,7 @@ if ($PSCmdlet.ShouldProcess($profilePath, 'install glowup profile (backing up an
     }
     Copy-Item (Join-Path $root 'powershell' 'Microsoft.PowerShell_profile.ps1') $profilePath -Force
     Copy-Item (Join-Path $root 'powershell' 'clipboard-image-shim.ps1') (Split-Path $profilePath) -Force
+    Copy-Item (Join-Path $themeSrc 'psreadline-colors.json') (Join-Path (Split-Path $profilePath) 'theme-colors.json') -Force
     Write-Host "Profile installed -> $profilePath" -ForegroundColor Green
 }
 
@@ -243,8 +263,9 @@ if ($wtPaths.Count -eq 0) {
     Write-Host "Windows Terminal not found - skipped appearance. (Install it from the Microsoft Store.)" -ForegroundColor DarkYellow
 } else {
     $defaults = Get-Content (Join-Path $root 'windows-terminal' 'profile-defaults.json') -Raw | ConvertFrom-WtJson
-    $scheme   = Get-Content (Join-Path $root 'windows-terminal' 'color-scheme.tokyo-night.json') -Raw | ConvertFrom-WtJson
+    $scheme   = Get-Content (Join-Path $themeSrc 'color-scheme.json') -Raw | ConvertFrom-WtJson
     $kb       = @(Get-Content (Join-Path $root 'windows-terminal' 'keybindings.json') -Raw | ConvertFrom-Json -AsHashtable)
+    $defaults['colorScheme'] = $scheme['name']
 
     foreach ($wt in $wtPaths) {
         if (-not $PSCmdlet.ShouldProcess($wt, 'merge glowup appearance + keybindings (backup first)')) { continue }

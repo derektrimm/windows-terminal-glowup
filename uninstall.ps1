@@ -69,6 +69,16 @@ foreach ($wt in @(Get-WtSettingsPath)) {
     }
 }
 
+# --- Theme colors ------------------------------------------------------------
+$themeColorsFile = Join-Path (Split-Path $profilePath) 'theme-colors.json'
+if (Test-Path $themeColorsFile) {
+    if ($PSCmdlet.ShouldProcess($themeColorsFile, 'remove theme colors')) {
+        Remove-Item $themeColorsFile -Force
+        Write-Host "Theme colors removed -> $themeColorsFile" -ForegroundColor Green
+        $restored++
+    }
+}
+
 # --- Clipboard image shim ----------------------------------------------------
 $shimFile = Join-Path (Split-Path $profilePath) 'clipboard-image-shim.ps1'
 $shimProcs = @(Get-CimInstance Win32_Process -Filter "Name = 'pwsh.exe'" -ErrorAction SilentlyContinue |

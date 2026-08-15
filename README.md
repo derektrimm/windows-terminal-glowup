@@ -4,11 +4,27 @@
 
 Turn a stock Windows Terminal + PowerShell into something you actually enjoy looking at — a themed two-line prompt, file icons, predictive autocomplete, a matching color scheme with transparency, and a set of modern CLI tools. One script, ~2 minutes.
 
-> **Theme:** Tokyo Night · **Prompt:** Oh My Posh (two-line) · **Font:** CaskaydiaCove Nerd Font
+> **Themes:** Tokyo Night (default) · Catppuccin Mocha · Gruvbox Dark · Nord — **Prompt:** Oh My Posh (two-line) · **Font:** CaskaydiaCove Nerd Font
 
 ![The two-line prompt, ll with file icons and git status, and a delta side-by-side diff](assets/preview.png)
 
 <sup>Rendered straight from this repo's theme and configs: the two-line prompt (path · git status · run time), `ll` with icons + git column, and a `delta` side-by-side diff.</sup>
+
+## Themes
+
+Terminal scheme, prompt, and shell syntax colors switch together. Pick one at install time — or re-run the installer later to change your mind:
+
+```powershell
+pwsh -ExecutionPolicy Bypass -File .\install.ps1 -Theme gruvbox-dark
+```
+
+| Tokyo Night *(default)* | Catppuccin Mocha |
+|---|---|
+| ![Tokyo Night](assets/theme-tokyo-night.png) | ![Catppuccin Mocha](assets/theme-catppuccin-mocha.png) |
+| **Gruvbox Dark** | **Nord** |
+| ![Gruvbox Dark](assets/theme-gruvbox-dark.png) | ![Nord](assets/theme-nord.png) |
+
+<sup>Each pane is rendered from that theme's shipped files: `themes/<name>/two-line.omp.json` for the prompt, `psreadline-colors.json` for the command colors, `color-scheme.json` for the background.</sup>
 
 ---
 
@@ -111,10 +127,13 @@ install.ps1                         one-command setup (idempotent, backs up; -Wh
 uninstall.ps1                       restores the backups, removes the theme
 powershell/
   Microsoft.PowerShell_profile.ps1  the profile (prompt, aliases, helpers)
-oh-my-posh/
-  two-line.omp.json                 the Oh My Posh theme
+  clipboard-image-shim.ps1          right-click image paste (see above)
+themes/
+  tokyo-night/ catppuccin-mocha/ gruvbox-dark/ nord/
+    color-scheme.json               Windows Terminal scheme
+    two-line.omp.json               Oh My Posh prompt in that palette
+    psreadline-colors.json          shell syntax + $PSStyle colors
 windows-terminal/
-  color-scheme.tokyo-night.json     the color scheme
   profile-defaults.json             font / opacity / scrollbar defaults
   keybindings.json                  the keybindings above
 git/
@@ -158,8 +177,9 @@ CI runs the suite plus PSScriptAnalyzer on every push and pull request.
 
 - **Less/more transparency:** change `opacity` (0–100) in `windows-terminal/profile-defaults.json`, or hold `Ctrl+Shift` and scroll in the terminal.
 - **No startup banner:** comment out the `fastfetch` line near the bottom of the profile.
-- **Different prompt segments/colors:** edit `oh-my-posh/two-line.omp.json` (see the [Oh My Posh docs](https://ohmyposh.dev/docs)).
-- **Another theme:** browse [windowsterminalthemes.dev](https://windowsterminalthemes.dev) and swap the scheme.
+- **Different prompt segments/colors:** edit your theme's `themes/<name>/two-line.omp.json` (see the [Oh My Posh docs](https://ohmyposh.dev/docs)) and re-run the installer.
+- **Switch themes:** re-run `install.ps1 -Theme <name>` — see [Themes](#themes).
+- **Roll your own theme:** copy a folder under `themes/`, change the colors in its three files (scheme from [windowsterminalthemes.dev](https://windowsterminalthemes.dev) works as `color-scheme.json`), add the folder name to the installer's `-Theme` ValidateSet, and install with it. The test suite checks any new theme folder automatically.
 
 ## Undo
 
@@ -173,4 +193,4 @@ restores your previous `$PROFILE` and each Windows Terminal `settings.json` from
 
 ## Credits
 
-Built on the work of [Oh My Posh](https://ohmyposh.dev), [Nerd Fonts](https://www.nerdfonts.com), [Terminal-Icons](https://github.com/devblackops/Terminal-Icons), [PSReadLine](https://github.com/PowerShell/PSReadLine), the [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) palette, and the excellent CLI tools linked above. MIT licensed — use it, fork it, share it.
+Built on the work of [Oh My Posh](https://ohmyposh.dev), [Nerd Fonts](https://www.nerdfonts.com), [Terminal-Icons](https://github.com/devblackops/Terminal-Icons), [PSReadLine](https://github.com/PowerShell/PSReadLine), the [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme), [Catppuccin](https://github.com/catppuccin/catppuccin), [Gruvbox](https://github.com/morhetz/gruvbox), and [Nord](https://github.com/nordtheme/nord) palettes, and the excellent CLI tools linked above. MIT licensed — use it, fork it, share it.

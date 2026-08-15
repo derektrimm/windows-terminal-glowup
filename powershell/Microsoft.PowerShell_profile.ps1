@@ -12,6 +12,35 @@ if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
 # --- Terminal-Icons : file-type glyphs in ls / dir --------------------------
 Import-Module Terminal-Icons -ErrorAction SilentlyContinue
 
+# --- Theme colors : syntax + $PSStyle palette from the installed theme -------
+# install.ps1 -Theme copies the chosen theme's palette here as
+# theme-colors.json; without it the Tokyo Night values below apply.
+$glowupTheme = $null
+$glowupThemeFile = Join-Path $PSScriptRoot 'theme-colors.json'
+if (Test-Path $glowupThemeFile) {
+    try { $glowupTheme = Get-Content $glowupThemeFile -Raw | ConvertFrom-Json -AsHashtable } catch { $glowupTheme = $null }
+}
+if (-not $glowupTheme -or -not $glowupTheme['psreadline'] -or -not $glowupTheme['style']) {
+    $glowupTheme = @{
+        psreadline = @{
+            Command            = '#7AA2F7'
+            Parameter          = '#BB9AF7'
+            Operator           = '#89DDFF'
+            Variable           = '#9ECE6A'
+            String             = '#9ECE6A'
+            Number             = '#FF9E64'
+            Type               = '#2AC3DE'
+            Comment            = '#565F89'
+            Keyword            = '#BB9AF7'
+            Error              = '#F7768E'
+            InlinePrediction   = '#565F89'
+            ListPrediction     = '#7AA2F7'
+            Default            = '#C0CAF5'
+        }
+        style = @{ directory = '#7AA2F7'; error = '#F7768E'; warning = '#E0AF68'; tableHeader = '#BB9AF7' }
+    }
+}
+
 # --- PSReadLine : predictive IntelliSense, syntax colors, smarter keys -------
 if ((Get-Module -ListAvailable PSReadLine) -and $Host.Name -eq 'ConsoleHost' -and -not [Console]::IsInputRedirected) {
     Import-Module PSReadLine
@@ -23,22 +52,8 @@ if ((Get-Module -ListAvailable PSReadLine) -and $Host.Name -eq 'ConsoleHost' -an
     Set-PSReadLineOption -HistorySearchCursorMovesToEnd
     Set-PSReadLineOption -BellStyle None
 
-    # Tokyo Night syntax-highlight palette
-    Set-PSReadLineOption -Colors @{
-        Command            = "#7AA2F7"
-        Parameter          = "#BB9AF7"
-        Operator           = "#89DDFF"
-        Variable           = "#9ECE6A"
-        String             = "#9ECE6A"
-        Number             = "#FF9E64"
-        Type               = "#2AC3DE"
-        Comment            = "#565F89"
-        Keyword            = "#BB9AF7"
-        Error              = "#F7768E"
-        InlinePrediction   = "#565F89"
-        ListPrediction     = "#7AA2F7"
-        Default            = "#C0CAF5"
-    }
+    # Syntax-highlight palette from the installed theme
+    Set-PSReadLineOption -Colors $glowupTheme['psreadline']
 
     # Keys: arrows search history by prefix, Tab = menu, Ctrl+f accept suggestion
     Set-PSReadLineKeyHandler -Key UpArrow   -Function HistorySearchBackward
@@ -85,10 +100,16 @@ if ((Get-Module -ListAvailable PSReadLine) -and $Host.Name -eq 'ConsoleHost' -an
 
 # --- $PSStyle : nicer built-in file listing / error colors (pwsh 7.2+) -------
 if ($PSStyle) {
-    $PSStyle.FileInfo.Directory = "`e[1;38;2;122;162;247m"   # bold blue dirs
-    $PSStyle.Formatting.Error        = "`e[38;2;247;118;142m"
-    $PSStyle.Formatting.Warning      = "`e[38;2;224;175;104m"
-    $PSStyle.Formatting.TableHeader  = "`e[38;2;187;154;247m"
+    $glowupAnsi = { param($hex, $bold)
+        $r = [Convert]::ToInt32($hex.Substring(1, 2), 16)
+        $g = [Convert]::ToInt32($hex.Substring(3, 2), 16)
+        $b = [Convert]::ToInt32($hex.Substring(5, 2), 16)
+        "`e[$(if ($bold) { '1;' })38;2;$r;$g;${b}m"
+    }
+    $PSStyle.FileInfo.Directory      = & $glowupAnsi $glowupTheme['style']['directory'] $true
+    $PSStyle.Formatting.Error        = & $glowupAnsi $glowupTheme['style']['error'] $false
+    $PSStyle.Formatting.Warning      = & $glowupAnsi $glowupTheme['style']['warning'] $false
+    $PSStyle.Formatting.TableHeader  = & $glowupAnsi $glowupTheme['style']['tableHeader'] $false
 }
 
 # --- zoxide : smart `cd` that learns your most-used dirs ----------------------
